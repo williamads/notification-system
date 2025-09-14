@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/twmb/franz-go/pkg/kgo"
 )
 
 // var db = make(map[string]string)
@@ -33,10 +35,39 @@ func setupRouter() *gin.Engine {
 
 		fmt.Printf("Received message: %s\n", message.Message)
 
+		produceMessage(message.Message)
+
 		c.String(http.StatusOK, "Message received")
 	})
 
 	return r
+}
+
+func produceMessage(message string) {
+	opts := []kgo.Opt{
+		kgo.SeedBrokers("localhost:9092"),
+		kgo.DefaultProduceTopic("screams"),
+		kgo.ClientID("my-client-id"),
+	}
+
+	client, err := kgo.NewClient(opts...)
+	if err != nil {
+		// TODO: handle/log this error
+		return
+	}
+	defer client.Close()
+
+	record := &kgo.Record{
+		Value: []byte(message),
+		Topic: "screams",
+	}
+
+	fmt.Println("Producing message to Kafka...")
+
+	if err := client.ProduceSync(context.Background(), record).FirstErr(); err != nil {
+		fmt.Printf("Error producing message: %v\n", err)
+		return
+	}
 }
 
 func main() {
