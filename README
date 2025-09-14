@@ -1,0 +1,25 @@
+## To start kafka
+
+Inside /kafka, run:
+
+```
+docker compose up -d
+```
+
+To create the topic, first go inside the container:
+
+```
+docker exec --workdir /opt/kafka/bin/ -it broker sh
+```
+
+Creating the topic:
+```
+./kafka-topics.sh --create --topic scream --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+```
+
+## Start Go Producer server
+
+Inside producer folder:
+```
+go run main.go
+```
